@@ -47,7 +47,7 @@ public class leader_follower implements Watcher {
                 try {
                     String path = zk.create("/votes/vote-", glas.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL);
                     String vote = new String(zk.getData(path,false,null));
-                    System.out.println(this.id + ": Glasao sa za  " + vote + "!");
+                    System.out.println(this.id + ": Glasao sam za  " + vote + "!");
 
                 } catch (KeeperException e2) {
 
@@ -63,21 +63,18 @@ public class leader_follower implements Watcher {
 
     @Override
     public void process(WatchedEvent event) {
-        if (event.getPath() == null) {
-            return;
-        }
+
         if (event.getPath().equals("/leader") && !lider) {
             try {
 
                 String winningVote = new String(zk.getData("/leader", false, null));
 
                 String result = "pobedaio";
-                if (winningVote.equals(mojGlas)){
+                if (!winningVote.equals(mojGlas)){
                     result = "izgubio";
                 }
-
-
                 System.out.println(this.id + ": Moj glas je: " + result + "  (Galsao sam za " + this.mojGlas + ")");
+
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -86,11 +83,13 @@ public class leader_follower implements Watcher {
             try {
                 List<String> children = zk.getChildren("/votes", true);
                 System.out.println(this.id + ": Neko je glasao!  Ukupno glasova: " + children.size() );
+
                 if (children.size() == 3) {
-                    String winningVote = this.prebrojGlasove(children);
-                    System.out.println(this.id + ": Pobednicki glas je:  " + winningVote + "!");
-                    this.zk.setData("/leader", winningVote.toString().getBytes(), 0);
+                    String pobeda = this.prebrojGlasove(children);
+                    System.out.println(this.id + ": Pobednicki glas je:  " + pobeda + "!");
+                    this.zk.setData("/leader", pobeda.toString().getBytes(), 0);
                 }
+
             } catch (Exception e) {
                 e.printStackTrace();
             }
